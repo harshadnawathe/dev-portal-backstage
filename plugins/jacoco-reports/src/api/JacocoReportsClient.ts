@@ -1,6 +1,6 @@
 import {readGitHubIntegrationConfigs} from '@backstage/integration';
 import {JacocoReportsApi} from './JacocoReportsApi';
-import {Octokit, RestEndpointMethodTypes} from '@octokit/rest';
+import {Octokit} from '@octokit/rest';
 import {ConfigApi, DiscoveryApi, FetchApi, OAuthApi} from '@backstage/core-plugin-api';
 
 export class JacocoReportsClient implements JacocoReportsApi {
@@ -47,8 +47,7 @@ export class JacocoReportsClient implements JacocoReportsApi {
 
     async getArtifactDetails({url,}: { url: string }): Promise<any> {
         const baseUrl = await this.discoveryApi.getBaseUrl('jacoco');
-        console.log(url, "**************", baseUrl)
-        this.fetchApi.fetch(`${baseUrl}/report`, {
+        const response =  await this.fetchApi.fetch(`${baseUrl}/report`, {
             method: "POST",
             headers: {
                 Accept: 'application/json',
@@ -56,7 +55,7 @@ export class JacocoReportsClient implements JacocoReportsApi {
             },
             body: JSON.stringify({url: url})
         })
-        return Promise.resolve("hello")
+        return await response.json();
     }
 
     async downloadArtifact({
@@ -80,32 +79,5 @@ export class JacocoReportsClient implements JacocoReportsApi {
             archive_format
         });
     }
-
-    async listWorkflowRuns({
-                               hostname,
-                               owner,
-                               repo,
-                               pageSize = 100,
-                               page = 0,
-                               branch,
-                           }: {
-        hostname?: string;
-        owner: string;
-        repo: string;
-        pageSize?: number;
-        page?: number;
-        branch?: string;
-    }): Promise<RestEndpointMethodTypes['actions']['listWorkflowRuns']['response']['data']> {
-        const octokit = await this.getOctokit(hostname);
-        const workflowRuns = await octokit.actions.listWorkflowRunsForRepo({
-            owner,
-            repo,
-            per_page: pageSize,
-            page,
-            ...(branch ? {branch} : {}),
-        });
-        return workflowRuns.data;
-    }
-
 
 }

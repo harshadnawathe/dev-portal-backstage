@@ -10,6 +10,8 @@ const processFile = async () => {
     for await (const record of csvFileStream) {
         records.push(record)
     }
+    fs.unlinkSync(`${__dirname}/tmp/testReport.csv`)
+    fs.unlinkSync(`${__dirname}/target.zip`)
     return records
 }
 

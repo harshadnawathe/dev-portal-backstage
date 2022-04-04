@@ -18,7 +18,6 @@ import {errorHandler} from '@backstage/backend-common';
 import express from 'express';
 import Router from 'express-promise-router';
 import {Logger} from 'winston';
-import * as zlib from "zlib";
 import * as fileSystem from "fs"
 import path from "path";
 import unzip from "./fileReader";
@@ -53,7 +52,7 @@ export async function createRouter(
             const output = fileSystem.createWriteStream(`${__dirname}/target.zip`);
             zipResponse.body.pipe(output);
             const csvData = await unzip(path.resolve(`${__dirname}/target.zip`))
-            response.json(csvData);
+            response.send(csvData);
         }
     );
 

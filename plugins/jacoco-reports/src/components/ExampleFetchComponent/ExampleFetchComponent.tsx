@@ -1,5 +1,5 @@
 /* eslint-disable */
-import React from 'react';
+import React, {useState} from 'react';
 import {Table, TableColumn} from '@backstage/core-components';
 import {configApiRef, useApi} from "@backstage/core-plugin-api";
 import {jacocoReportsApiRef} from "../../api";
@@ -7,7 +7,23 @@ import {useEntity} from "@backstage/plugin-catalog-react";
 import {readGitHubIntegrationConfigs} from "@backstage/integration";
 import {getProjectNameFromEntity} from "../getProjectNameFromEntity";
 import {useAsync} from "react-use";
-import {Button} from "@material-ui/core";
+import {Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle} from "@material-ui/core";
+
+const testReportColumn: TableColumn[] = [
+    {title: 'GROUP', field: 'GROUP'},
+    {title: 'PACKAGE', field: 'PACKAGE'},
+    {title: 'CLASS', field: 'CLASS'},
+    {title: 'INSTRUCTION_MISSED', field: 'INSTRUCTION_MISSED'},
+    {title: "INSTRUCTION_COVERED", field: "INSTRUCTION_COVERED"},
+    {title: "BRANCH_MISSED", field: "BRANCH_MISSED"},
+    {title: "BRANCH_COVERED", field: "BRANCH_COVERED"},
+    {title: "LINE_MISSED", field: "LINE_MISSED"},
+    {title: "LINE_COVERED", field: "LINE_COVERED"},
+    {title: "COMPLEXITY_MISSED", field: "COMPLEXITY_MISSED"},
+    {title: "COMPLEXITY_COVERED", field: "COMPLEXITY_COVERED"},
+    {title: "METHOD_MISSED", field: "METHOD_MISSED"},
+    {title: "METHOD_COVERED", field: "METHOD_COVERED"},
+];
 
 const columns: TableColumn[] = [
     {title: 'Artifact Id', field: 'artifactId'},
@@ -15,7 +31,11 @@ const columns: TableColumn[] = [
     {title: 'View Details', field: 'downloadLink'},
 ];
 
-export const DenseTable = () => {
+export const JacocoTestArtifacts = () => {
+    const [openDialogue, setOpen] = useState(false);
+    const [testReport, setTestReport] = useState([]);
+    const [showLoader, setShowLoader] = useState(false);
+
     const config = useApi(configApiRef);
     const api = useApi(jacocoReportsApiRef);
     const {entity} = useEntity();
@@ -38,7 +58,7 @@ export const DenseTable = () => {
     }
 
     async function downloadArtifact(artifactId: number) {
-        const artifact = repo && owner
+        return repo && owner
             ? await api.downloadArtifact({
                 hostname,
                 owner,
@@ -46,16 +66,16 @@ export const DenseTable = () => {
                 artifact_id: artifactId,
                 archive_format: "zip"
             })
-            : Promise.reject(new Error('No repo/owner provided'));
-        return artifact
+            : Promise.reject(new Error('No repo/owner provided'))
     }
 
     async function onViewArtifact(artifact: any) {
-        console.log("artifact id is", artifact.id, repo, owner)
+        setShowLoader(true);
         const downloadedArtifact = await downloadArtifact(artifact.id)
-        await api.getArtifactDetails({url: downloadedArtifact.url})
-
-        debugger;
+        const testReport = await api.getArtifactDetails({url: downloadedArtifact.url})
+        setOpen(true)
+        setTestReport(testReport)
+        setShowLoader(false);
     }
 
     const artifacts = fetchJacocoReports();
@@ -69,16 +89,62 @@ export const DenseTable = () => {
         };
     }) : [];
 
+    const closeDialog = () => {
+        setOpen(false)
+    }
+
+    function renderCSVReportContent() {
+        return (
+            <Table
+                title="Test Report Details"
+                options={{search: false, paging: false}}
+                columns={testReportColumn}
+                data={testReport}
+            />
+        )
+    }
+
+    function renderCsvReport() {
+        return (
+            <Dialog
+                open={openDialogue}
+                onClose={closeDialog}
+                aria-labelledby="dialog-title"
+                aria-describedby="dialog-description" fullWidth
+                maxWidth="lg">
+                <DialogTitle id="dialog-title">Test Report</DialogTitle>
+                <DialogContent>
+                    {(testReport.length === 0) ? <h1>No Report Present</h1> : renderCSVReportContent()}
+                </DialogContent>
+                <DialogActions>
+                    <Button color="primary" onClick={closeDialog}>
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>)
+    }
+
+    function circularIndeterminate() {
+        return (
+            <Box sx={{ display: 'flex' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+
     return (
-        <Table
-            title="Example User List (fetching data from randomuser.me)"
+        <><Table
+            title="Github Action Artifacts"
             options={{search: false, paging: false}}
             columns={columns}
             data={data}
         />
+            {showLoader ? circularIndeterminate() : renderCsvReport()}
+        </>
     );
 };
 
 export const ExampleFetchComponent = () => {
-    return <DenseTable/>;
-};
+        return <JacocoTestArtifacts/>;
+    }
+;
