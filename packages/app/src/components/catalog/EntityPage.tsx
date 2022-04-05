@@ -61,7 +61,10 @@ import {
     RELATION_PART_OF,
     RELATION_PROVIDES_API,
 } from '@backstage/catalog-model';
-import {ExampleFetchComponent} from "@internal/plugin-jacoco-reports/src/components/ExampleFetchComponent";
+import {
+    isJacocoReportAvailable,
+    ExampleFetchComponent,
+} from "@internal/plugin-jacoco-reports/src/components/ExampleFetchComponent";
 
 const cicdContent = (
     // This is an example of how you can implement your company's logic in entity page.
@@ -89,7 +92,7 @@ const cicdContent = (
         </EntitySwitch.Case>
     </EntitySwitch>
 );
- const isJacocoReportAvailable = () => true;
+
 
 const jacocoReportContent = (<EntitySwitch>
     <EntitySwitch.Case if={isJacocoReportAvailable}>

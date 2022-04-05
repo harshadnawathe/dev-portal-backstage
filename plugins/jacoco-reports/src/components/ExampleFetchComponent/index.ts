@@ -1,1 +1,4 @@
-export { ExampleFetchComponent } from './ExampleFetchComponent';
+export {
+    ExampleFetchComponent,
+    isJacocoReportAvailable,
+} from './ExampleFetchComponent';

@@ -5,9 +5,10 @@ import {configApiRef, useApi} from "@backstage/core-plugin-api";
 import {jacocoReportsApiRef} from "../../api";
 import {useEntity} from "@backstage/plugin-catalog-react";
 import {readGitHubIntegrationConfigs} from "@backstage/integration";
-import {getProjectNameFromEntity} from "../getProjectNameFromEntity";
+import {getProjectNameFromEntity, GITHUB_ACTIONS_ANNOTATION} from "../getProjectNameFromEntity";
 import {useAsync} from "react-use";
 import {Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle} from "@material-ui/core";
+import {Entity} from "@backstage/catalog-model";
 
 const testReportColumn: TableColumn[] = [
     {title: 'GROUP', field: 'GROUP'},
@@ -81,11 +82,13 @@ export const JacocoTestArtifacts = () => {
     const artifacts = fetchJacocoReports();
 
     // @ts-ignore
-    const data = !artifacts.loading ? artifacts.value.data.artifacts.map(artifact => {
+    const data = !artifacts.loading ? artifacts.value.data.artifacts.filter(artifact =>{
+        return artifact.name === getJacocoArtifactNameFromEntity(entity)
+    }).map(artifact => {
         return {
             artifactId: artifact.id,
             createdAt: artifact.created_at,
-            downloadLink: <Button onClick={() => onViewArtifact(artifact)}>View Artifact</Button>
+            downloadLink: <Button onClick={() => onViewArtifact(artifact)}>View Report</Button>
         };
     }) : [];
 
@@ -148,3 +151,15 @@ export const ExampleFetchComponent = () => {
         return <JacocoTestArtifacts/>;
     }
 ;
+
+export const JACOCO_REPORTS_CSV = 'tw.com/jacoco-reports-csv';
+
+export const isJacocoReportAvailable = (entity: Entity) =>
+    Boolean(
+        entity.metadata.annotations?.[GITHUB_ACTIONS_ANNOTATION] &&
+        entity.metadata.annotations?.[JACOCO_REPORTS_CSV]
+    );
+
+
+export const getJacocoArtifactNameFromEntity = (entity: Entity) =>
+    entity?.metadata.annotations?.[JACOCO_REPORTS_CSV] ?? '';
