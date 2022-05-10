@@ -71,6 +71,13 @@ export class DataComponentProcessor implements CatalogProcessor {
                     'consumesResource',
                     'resourceConsumedBy',
                 );
+
+                doEmit(
+                    dataComponent.spec.producesResources,
+                    {defaultKind: 'Resource', defaultNamespace: selfRef.namespace},
+                    'producesResource',
+                    'resourceProducedBy',
+                );
             }
         }
         return entity;
